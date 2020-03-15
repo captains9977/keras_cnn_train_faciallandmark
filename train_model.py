@@ -31,7 +31,7 @@ def data_loader(path,input_shape):
     imgs_array = imgs_array.reshape(-1,input_shape, input_shape, 1)
     # Extract labels (key point cords)
     labels_array = data_frame[data_frame.columns[:-1]].values
-    labels_array = (labels_array - input_shape/2) / input_shape/2    # Normalize, traget cordinates to (-1, 1)
+    # labels_array = (labels_array - input_shape/2) / input_shape/2    # Normalize, traget cordinates to (-1, 1)
     labels_array = (labels_array)     # Normalize, traget cordinates to (-1, 1)
     labels_array = labels_array.astype(np.float32)
 #     shuffle the train data
@@ -44,38 +44,45 @@ def facial_landmark_model():
     model = Sequential()
     # Layer 1
     model.add(Conv2D(32, (3, 3), padding='same',
-                     activation='relu', input_shape=X_train.shape[1:]))
-    model.add(MaxPooling2D(pool_size=2))  # 64*64
+                     activation='relu', strides=(1, 1), input_shape=X_train.shape[1:]))
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))  # 64*64
 
     # Layer 2
-    model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
-    model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
-    model.add(MaxPooling2D(pool_size=2))  # 32*32
+    model.add(Conv2D(64, (3, 3), padding='same',
+                     activation='relu', strides=(1, 1)))
+    model.add(Conv2D(64, (3, 3), padding='valid',
+                     activation='relu', strides=(1, 1)))
+    model.add(MaxPooling2D(pool_size=(2, 2),
+                           strides=(2, 2), padding="valid"))  # 32*32
 
     # Layer 3
-    model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
-    model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
-    model.add(MaxPooling2D(pool_size=2))  # 16*16
+    model.add(Conv2D(64, (3, 3), padding='same',
+                     activation='relu', strides=(1, 1)))
+    model.add(Conv2D(64, (3, 3), padding='same',
+                     activation='relu', strides=(1, 1)))
+    model.add(MaxPooling2D(pool_size=(2, 2),
+                           strides=(2, 2), padding="valid"))  # 16*16
 
     # Layer 4
-    model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
-    model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
-    model.add(MaxPooling2D(pool_size=2))  # 8*8
+    model.add(Conv2D(128, (3, 3), padding='same',
+                     activation='relu', strides=(1, 1)))
+    model.add(Conv2D(128, (3, 3), padding='same',
+                     activation='relu', strides=(1, 1)))
+    model.add(MaxPooling2D(pool_size=(2, 2),
+                           strides=(2, 2), padding="valid"))  # 8*8
 
     # Layer 5
-    model.add(Conv2D(256, (3, 3), padding='same', activation='relu'))
-    model.add(MaxPooling2D(pool_size=2))  # 4*4
+    #model.add(Conv2D(256, (3, 3), padding='same',
+    #                 activation='relu', strides=(1, 1)))
+    #model.add(MaxPooling2D(pool_size=(2, 2),
+    #                       strides=(2, 2), padding="valid"))  # 4*4
 
     # Layer 6
-    model.add(Conv2D(512, (3, 3), padding='same', activation='relu'))
-    model.add(MaxPooling2D(pool_size=2))  # 2*2
-
-    # Layer 7
     model.add(Flatten())
-    model.add(Dense(1024, activation='relu'))
-#    model.add(Dense(1024, activation='relu'))
-    model.add(Dropout(0.3))
-    model.add(Dense(196))  # 98 facial landmarks points
+    ## ADDING DROPOUT LAYER
+    model.add(Dropout(0.2)) # randomly drop nueron for given number
+    model.add(Dense(1024, activation='relu', use_bias=True))
+    model.add(Dense(196, activation=None, use_bias=True))
 
     return model
 
