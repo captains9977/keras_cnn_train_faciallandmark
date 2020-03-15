@@ -1,0 +1,5 @@
+checkpoints
+models
+*.csv
+*.h5
+*.hdf5
