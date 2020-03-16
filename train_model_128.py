@@ -71,15 +71,9 @@ def facial_landmark_model():
     model.add(MaxPooling2D(pool_size=(2, 2),
                            strides=(2, 2), padding="valid"))  # 8*8
 
-    # Layer 5
-    #model.add(Conv2D(256, (3, 3), padding='same',
-    #                 activation='relu', strides=(1, 1)))
-    #model.add(MaxPooling2D(pool_size=(2, 2),
-    #                       strides=(2, 2), padding="valid"))  # 4*4
-
     # Layer 6
     model.add(Flatten())
-    ## ADDING DROPOUT LAYER
+    # model.add(Dropout(0.2))
     model.add(Dropout(0.2)) # randomly drop nueron for given number
     model.add(Dense(1024, activation='relu', use_bias=True))
     model.add(Dense(196, activation=None, use_bias=True))

@@ -1,5 +1,6 @@
 checkpoints
-models
+models*
 *.csv
 *.h5
 *.hdf5
+*.tgz
