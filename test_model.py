@@ -26,7 +26,9 @@ ap.add_argument("--normalize", required=False,
 ap.add_argument("-p", "--path", required=True, help="Path to model")
 ap.add_argument("-v","--video-path", required=False,default="",help="Sample VDO for testing")
 ap.add_argument("--use-gpu",required=False,default=False,type=bool,help="Use GPU for computation")
+ap.add_argument("--show-vdo",default=False,required=False,help="Show video screen",type=bool)
 args = vars(ap.parse_args())
+show_vdo = args["show_vdo"]
 path_to_model = args["path"]
 input_shape = args["input_shape"]
 normalize = args["normalize"]
@@ -350,9 +352,10 @@ while True:
     except Exception as err:
         # print(err)
         pass
-    cv2.imshow("frame", frame)
-    key = cv2.waitKey(1) & 0xff
-    if ord("q") == key:
-        break
+    if show_vdo:
+        cv2.imshow("frame", frame)
+        key = cv2.waitKey(1) & 0xff
+        if ord("q") == key:
+            break
 cap.release()
 cv2.destroyAllWindows()
