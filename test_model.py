@@ -38,14 +38,19 @@ if use_gpu:
     device = '/gpu:0'
 else:
     device = '/cpu:0'
+print("LOADING MODEL {}".format(path_to_model))
 with tf.device(device):
     model = load_model(path_to_model)  # load model
-plot_model(model, to_file='model.png')  # model schematic
-model_image = cv2.imread("model.png")  # read model image
-mHeight, mWidth, _ = model_image.shape  # get shape of model image
-model_image = cv2.resize(
+try:
+    plot_model(model, to_file='model.png')  # model schematic
+    model_image = cv2.imread("model.png")  # read model image
+    mHeight, mWidth, _ = model_image.shape  # get shape of model image
+    model_image = cv2.resize(
     model_image, (int(mWidth*(0.6)), int(mHeight*(0.6))))  # resize model image
-cv2.imshow("model structure", model_image)  # show model structure
+    if show_vdo:
+        cv2.imshow("model structure", model_image)  # show model structure
+except:
+    pass
 net = cv2.dnn.readNetFromTensorflow(
     './opencv_face_detector_uint8.pb', './opencv_face_detector.pbtxt')
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
@@ -91,6 +96,7 @@ def detect_points(face):
         label_points = (np.squeeze(y_test)*input_shape)+input_shape
     label_points = (np.squeeze(y_test))
     stop = time.time()
+    print("Execution time:{}(s)".format(stop-start))
     return label_points
 
 def calculate_mar(key_points):  # calculate mouth aspect ratio

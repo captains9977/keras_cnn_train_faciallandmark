@@ -7,7 +7,7 @@ from tensorflow.keras.callbacks import ModelCheckpoint, History
 from tensorflow.keras.initializers import RandomNormal
 from tensorflow.keras import optimizers
 from tensorflow.keras.layers import Flatten, Dense
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dropout
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dropout, GlobalAveragePooling2D, Activation
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.utils import multi_gpu_model
 from tensorflow.keras import regularizers
@@ -33,6 +33,7 @@ def data_loader(path,input_shape):
     # Extract labels (key point cords)
     labels_array = data_frame[data_frame.columns[1:]].values
     # labels_array = (labels_array - input_shape/2) / input_shape/2    # Normalize, traget cordinates to (-1, 1)
+    labels_array = (labels_array)     # Normalize, traget cordinates to (-1, 1)
     labels_array = labels_array.astype(np.float32)
 #     shuffle the train data
     imgs_array, labels_array = shuffle(
@@ -72,28 +73,23 @@ def facial_landmark_model():
     model.add(MaxPooling2D(pool_size=(2, 2),
                            strides=(2, 2), padding="valid"))  # 4*4
 
-    # layer 5
+
     model.add(Conv2D(256, (3, 3), padding='same',
                      activation='relu', strides=(1, 1)))
     model.add(Conv2D(256, (3, 3), padding='same',
                      activation='relu', strides=(1, 1)))
     model.add(MaxPooling2D(pool_size=(2, 2),
-                           strides=(2, 2), padding="valid"))  # 2*2
+                           strides=(2, 2), padding="valid"))  # 4*4
 
-    # layer 6
-    model.add(Conv2D(512, (3, 3), padding='same',
-                     activation='relu', strides=(1, 1)))
-    model.add(Conv2D(512, (3, 3), padding='same',
-                     activation='relu', strides=(1, 1)))
-    model.add(MaxPooling2D(pool_size=(2, 2),
-                           strides=(2, 2), padding="valid"))  # 1*1
 
-    # flatten and desnsely connect nueron
+
+
+    # Layer 6
     model.add(Flatten())
     # model.add(Dropout(0.2))
     model.add(Dense(1024, activation='relu', use_bias=True))
     model.add(Dropout(0.2)) # randomly drop nueron for given number
-    model.add(Dense(1024, activation='relu', use_bias=True))
+    model.add(Dense(2048, activation='relu', use_bias=True))
     model.add(Dropout(0.2)) # randomly drop nueron for given number
     model.add(Dense(196, activation=None, use_bias=True))
 
@@ -165,11 +161,12 @@ if __name__ == "__main__":
                                    verbose=1, save_best_only=True)
     # Complie Model
     epochs = EPOCHS  # Epcoh of training to go
-    adam_optimizer = optimizers.Adam(lr=LEARNING_RATE)  # ADam optimizer
+    #adam_optimizer = optimizers.Adam(lr=LEARNING_RATE)  # ADam optimizer
+    sgd_optimizer = optimizers.SGD(lr=LEARNING_RATE) # SGD optimizer
     # use single gpu to train model
     if NUM_GPU == 1:
         for i in range(TRAINING_ITERATION):
-            model.compile(optimizer=adam_optimizer, loss='mean_squared_error',
+            model.compile(optimizer=sgd_optimizer, loss='mean_squared_error',
                           metrics=METRICS)
             model_fit = model.fit(X_train, y_train, validation_split=VALIDATION_SPLIT, epochs=epochs, shuffle=True,
                                   batch_size=BATCH_SIZE, callbacks=[checkpointer,hist], verbose=1)
