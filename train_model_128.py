@@ -3,7 +3,7 @@ import tensorflow as tf
 import tensorflow.keras
 from datetime import datetime
 from tensorflow.keras.regularizers import l2
-from tensorflow.keras.callbacks import ModelCheckpoint, History
+from tensorflow.keras.callbacks import ModelCheckpoint, History , TensorBoard
 from tensorflow.keras.initializers import RandomNormal
 from tensorflow.keras import optimizers
 from tensorflow.keras.layers import Flatten, Dense
@@ -90,7 +90,7 @@ def facial_landmark_model():
 
     # flatten and desnsely connect nueron
     model.add(Flatten())
-    # model.add(Dropout(0.2))
+    model.add(Dropout(0.2))
     model.add(Dense(1024, activation='relu', use_bias=True))
     model.add(Dropout(0.2)) # randomly drop nueron for given number
     model.add(Dense(1024, activation='relu', use_bias=True))
@@ -152,6 +152,7 @@ if __name__ == "__main__":
         NUM_GPU = 1
     print(MONITOR,"--------")
     print("Loading Dataset For Training...")
+    print("PATH TO DATASET",PATH_TO_DATASET)
     X_train, y_train = data_loader(PATH_TO_DATASET,INPUT_SHAPE)
     print("Training datapoint shape: X_train.shape:{}".format(X_train.shape))
     print("Training labels shape: y_train.shape:{}".format(y_train.shape))
@@ -166,23 +167,28 @@ if __name__ == "__main__":
     # Complie Model
     epochs = EPOCHS  # Epcoh of training to go
     adam_optimizer = optimizers.Adam(lr=LEARNING_RATE)  # ADam optimizer
-    # use single gpu to train model
-    if NUM_GPU == 1:
-        for i in range(TRAINING_ITERATION):
-            model.compile(optimizer=adam_optimizer, loss='mean_squared_error',
-                          metrics=METRICS)
-            model_fit = model.fit(X_train, y_train, validation_split=VALIDATION_SPLIT, epochs=epochs, shuffle=True,
-                                  batch_size=BATCH_SIZE, callbacks=[checkpointer,hist], verbose=1)
-            model.save(MODEL_PATH)
-            print("SUCCESSFULLY SAVED MODEL --- ITERATION {}".format(i))
-    # if using multiple gpu to train model
-    elif NUM_GPU >= 2:
-        parallel_model = multi_gpu_model(
-            model, gpus=NUM_GPU, cpu_merge=True)
-        parallel_model.compile(loss='mean_squared_error',
-                               optimizer=adam_optimizer, metrics=['accuracy'])
-        parallel_model.fit(X_train, y_train, validation_split=0.30, epochs=epochs,
-                           batch_size=batch_size, callbacks=[checkpointer, hist], verbose=1)
-        parallel_model.save('models/model_128_9.h5')
-        print("Save model successfully")
-
+    log_dir = logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
+    tensorboard = TensorBoard(log_dir=log_dir) #tensorboard callback
+    try:
+        # use single gpu to train model
+        if NUM_GPU == 1:
+            for i in range(TRAINING_ITERATION):
+                model.compile(optimizer=adam_optimizer, loss='mean_squared_error',
+                              metrics=METRICS)
+                model_fit = model.fit(X_train, y_train, validation_split=VALIDATION_SPLIT, epochs=epochs, shuffle=True,
+                                      batch_size=BATCH_SIZE, callbacks=[checkpointer,hist,tensorboard], verbose=1)
+                model.save(MODEL_PATH)
+                print("SUCCESSFULLY SAVED MODEL --- ITERATION {}".format(i))
+        # if using multiple gpu to train model
+        elif NUM_GPU >= 2:
+            parallel_model = multi_gpu_model(
+                model, gpus=NUM_GPU, cpu_merge=True)
+            parallel_model.compile(loss='mean_squared_error',
+                                   optimizer=adam_optimizer, metrics=['accuracy'])
+            parallel_model.fit(X_train, y_train, validation_split=0.30, epochs=epochs,
+                               batch_size=batch_size, callbacks=[checkpointer, hist], verbose=1)
+            parallel_model.save('models/model_128_9.h5')
+            print("Save model successfully")
+    except KeyboardInterrupt:
+        print("Saving Model...")
+        model.save(MODAL_PATH) # Force save a model when keyboard interrupt

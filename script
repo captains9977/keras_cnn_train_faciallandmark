@@ -1,0 +1,1 @@
+sudo $(which python) train_model_128.py -p dataset/train_98_3_tmp.csv -e 1200 -lr 0.0008 -c /home/phakawat/new_models/checkpoint_64.h5 -m /home/phakawat/new_models/model_64.h5 -i 1 --metrics mse --monitor val_loss --input-shape 128 --gpu 1 -vs 0.30 -bs 64
